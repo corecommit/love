@@ -210,7 +210,9 @@ bool Keyboard::getConstant(Key in, SDL_Keycode &out)
 bool Keyboard::getConstant(SDL_Keycode in, Key &out)
 {
 #ifdef LOVE_ANDROID
-	// TODO: Can this be done more cleanly?
+	// SDL maps the Android hardware back button to SDLK_AC_BACK, which has no
+	// direct LOVE key equivalent. We remap it to KEY_ESCAPE so games can handle
+	// it with a standard key check. This is the correct remapping layer for it.
 	if (in == SDLK_AC_BACK)
 	{
 		out = KEY_ESCAPE;

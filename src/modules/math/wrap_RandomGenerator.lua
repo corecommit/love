@@ -73,14 +73,18 @@ local ffifuncs = ffi.cast("FFI_RandomGenerator **", ffifuncspointer_str)[0]
 -- Overwrite some regular love.math functions with FFI implementations.
 
 function RandomGenerator:random(l, u)
-	-- TODO: This should ideally be handled inside ffifuncs.random
+	-- The self-nil check cannot be done inside the FFI function because Lua's
+	-- colon-call syntax passes nil (not an error) when called as a plain function.
+	-- Moving this into C would require changing the FFI signature or adding a
+	-- wrapper layer, so it lives here for now.
 	if self == nil then error("bad argument #1 to 'random' (RandomGenerator expected, got no value)", 2) end
 	local r = tonumber(ffifuncs.random(self))
 	return getrandom(r, l, u)
 end
 
 function RandomGenerator:randomNormal(stddev, mean)
-	-- TODO: This should ideally be handled inside ffifuncs.randomNormal
+	-- Same reasoning as above: self-nil and type checks stay in Lua until
+	-- the FFI interface is extended to handle them natively.
 	if self == nil then error("bad argument #1 to 'randomNormal' (RandomGenerator expected, got no value)", 2) end
 
 	stddev = stddev == nil and 1 or stddev

@@ -586,8 +586,12 @@ bool Window::setWindow(int width, int height, WindowSettings *settings)
 		if (SDL_SetWindowFullscreen(window, (sdlflags & SDL_WINDOW_FULLSCREEN) != 0) && renderer == graphics::RENDERER_OPENGL)
 			SDL_GL_MakeCurrent(window, glcontext);
 
-		// TODO: should we make this conditional, to avoid love.resize events when the size doesn't change?
-		SDL_SetWindowSize(window, width, height);
+		// Only call SDL_SetWindowSize if dimensions actually changed, to avoid
+		// spurious love.resize events when toggling fullscreen at the same resolution.
+		int currentW = 0, currentH = 0;
+		SDL_GetWindowSize(window, &currentW, &currentH);
+		if (currentW != width || currentH != height)
+			SDL_SetWindowSize(window, width, height);
 
 		if (this->settings.resizable != f.resizable)
 			SDL_SetWindowResizable(window, f.resizable);
@@ -668,8 +672,17 @@ bool Window::setWindow(int width, int height, WindowSettings *settings)
 				context = (void *) SDL_Metal_GetLayer(metalView);
 #endif
 
-			// TODO: try/catch
-			graphics->setMode(context, (int) scaledw, (int) scaledh, pixelWidth, pixelHeight, f.stencil, f.depth, f.msaa);
+			try
+			{
+				graphics->setMode(context, (int) scaledw, (int) scaledh, pixelWidth, pixelHeight, f.stencil, f.depth, f.msaa);
+			}
+			catch (love::Exception &e)
+			{
+				// If graphics mode setup fails, close the window cleanly rather than
+				// leaving it in a half-initialized state.
+				close(false);
+				throw;
+			}
 		}
 		else
 		{

@@ -107,7 +107,7 @@ int WaveDecoder::decode()
 		int wuff_status = wuff_read(handle, (wuff_uint8 *) buffer+size, &bytes);
 
 		if (wuff_status < 0)
-			return 0;
+			return -1; // Distinguish decode error from EOF (which returns 0)
 		else if (bytes == 0)
 		{
 			eof = true;

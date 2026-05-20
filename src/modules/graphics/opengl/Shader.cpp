@@ -168,6 +168,8 @@ void Shader::mapActiveUniforms()
 		{
 			u.dataSizePacked = u.dataSizeAllocated = getUniformDataSizePacked(u);
 			u.data = malloc(u.dataSizeAllocated);
+			if (u.data == nullptr)
+				throw love::Exception("Out of memory allocating uniform data for shader.");
 			memset(u.data, 0, u.dataSizeAllocated);
 
 			const auto &valuesit = reflection.localUniformInitializerValues.find(u.name);
@@ -237,6 +239,8 @@ void Shader::mapActiveUniforms()
 			{
 				u.dataSizePacked = u.dataSizeAllocated = sizeof(int) * u.count;
 				u.data = malloc(u.dataSizeAllocated);
+				if (u.data == nullptr)
+					throw love::Exception("Out of memory allocating storage buffer binding data for shader.");
 				for (int i = 0; i < u.count; i++)
 					u.ints[i] = -1;
 			}

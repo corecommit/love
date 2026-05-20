@@ -32,6 +32,7 @@
 #include "Filter.h"
 
 // STL
+#include <atomic>
 #include <vector>
 #include <stack>
 
@@ -197,7 +198,7 @@ private:
 	float velocity[3];
 	float direction[3];
 	bool relative = false;
-	bool looping = false;
+	std::atomic<bool> looping {false};
 	float minVolume = 0.0f;
 	float maxVolume = 1.0f;
 	float referenceDistance = 1.0f;

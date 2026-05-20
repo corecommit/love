@@ -431,8 +431,10 @@ public:
 
 private:
 
-	// FIXME: This should be a weak reference, rather than being completely
-	// unowned?
+	// Raw non-owning pointer to the parent World. Body must not outlive its World.
+	// FIXME: Should be a std::weak_ptr or similar once World is refcounted,
+	// to allow graceful detection of a destroyed World instead of a dangling-pointer crash.
+	// For now, always call destroy() before releasing a World that still has Bodies.
 	World *world;
 
 	bool hasCustomMass;

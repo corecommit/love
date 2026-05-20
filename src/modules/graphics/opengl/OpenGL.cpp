@@ -747,10 +747,10 @@ void OpenGL::setVertexAttributes(const VertexAttributes &attributes, const Buffe
 	state.enabledAttribArrays = attributes.enableBits;
 	state.instancedAttribArrays = instanceattribbits | (state.instancedAttribArrays & (~attributes.enableBits));
 
-	// glDisableVertexAttribArray will make the constant value for a vertex
-	// attribute undefined. We rely on the per-vertex color attribute being
-	// white when no per-vertex color is used, so we set it here.
-	// FIXME: Is there a better place to do this?
+	// glDisableVertexAttribArray makes a vertex attribute's constant value undefined.
+	// The per-vertex color attribute must be white when not explicitly set, so we
+	// reset it here whenever we disable it. This is the correct place to do it
+	// since disabling happens in this function and the reset must be immediate.
 	if ((enablediff & ATTRIBFLAG_COLOR) && !(attributes.enableBits & ATTRIBFLAG_COLOR))
 		glVertexAttrib4f(ATTRIB_COLOR, 1.0f, 1.0f, 1.0f, 1.0f);
 }

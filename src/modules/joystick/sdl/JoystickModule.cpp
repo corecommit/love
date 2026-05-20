@@ -284,8 +284,10 @@ bool JoystickModule::setGamepadMapping(const std::string &guid, Joystick::Gamepa
 	if (status != -1)
 		recentGamepadGUIDs[guid] = true;
 
-	// FIXME: massive hack until missing APIs are added to SDL 2:
-	// https://bugzilla.libsdl.org/show_bug.cgi?id=1975
+	// checkGamepads ensures any already-connected joystick with this GUID
+	// gets re-evaluated as a gamepad now that the mapping is registered.
+	// SDL3's SDL_AddGamepadMapping does not fire device events for already-open
+	// joysticks, so this manual check is still necessary.
 	if (status == 1)
 		checkGamepads(guid);
 
@@ -352,11 +354,9 @@ void JoystickModule::removeBindFromMapString(std::string &mapstr, const std::str
 
 void JoystickModule::checkGamepads(const std::string &guid) const
 {
-	// FIXME: massive hack until missing APIs are added to SDL 2:
-	// https://bugzilla.libsdl.org/show_bug.cgi?id=1975
-
-	// Make sure all connected joysticks of a certain guid that are
-	// gamepad-capable are opened as such.
+	// SDL3 does not fire device-added events for joysticks already open when
+	// a new gamepad mapping is registered. We manually re-check all connected
+	// joysticks with the matching GUID so they get promoted to gamepad status.
 	int count = 0;
 	SDL_JoystickID *sdlsticks = SDL_GetJoysticks(&count);
 	for (int d_index = 0; d_index < count; d_index++)
@@ -454,8 +454,8 @@ void JoystickModule::loadGamepadMappings(const std::string &mappings)
 			std::string guid = mapping.substr(0, mapping.find_first_of(','));
 			recentGamepadGUIDs[guid] = true;
 
-			// FIXME: massive hack until missing APIs are added to SDL 2:
-			// https://bugzilla.libsdl.org/show_bug.cgi?id=1975
+			// Re-check connected joysticks: SDL3 won't fire device events
+			// for already-open joysticks when a new mapping is added.
 			checkGamepads(guid);
 		}
 	}

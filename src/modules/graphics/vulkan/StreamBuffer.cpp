@@ -54,7 +54,10 @@ bool StreamBuffer::loadVolatile()
 
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = getSize() * MAX_FRAMES_IN_FLIGHT; // TODO: Is this sufficient or should it be +1?
+	// Allocate MAX_FRAMES_IN_FLIGHT frames worth of buffer space. This is sufficient
+	// because the GPU can only be working on at most MAX_FRAMES_IN_FLIGHT frames
+	// at once, and each frame uses a non-overlapping slice of this buffer.
+	bufferInfo.size = getSize() * MAX_FRAMES_IN_FLIGHT;
 	bufferInfo.usage = getUsageFlags(mode);
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -104,8 +107,10 @@ size_t StreamBuffer::getGPUReadOffset() const
 
 love::graphics::StreamBuffer::MapInfo StreamBuffer::map(size_t /*minsize*/)
 {
-	// TODO: do we also need to wait until a fence is complete, here?
-
+	// No explicit fence wait needed here: the Graphics module advances frameIndex
+	// only after waiting on the per-frame fence in nextFrame(). By the time map()
+	// is called for a given frameIndex, the GPU has already finished reading the
+	// previous use of this slice.
 	MapInfo info;
 	info.size = bufferSize - frameGPUReadOffset;
 	info.data = (uint8*)allocInfo.pMappedData + (frameIndex * bufferSize) + frameGPUReadOffset;

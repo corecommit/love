@@ -387,8 +387,7 @@ bool Source::update()
 	{
 		case TYPE_STATIC:
 		{
-			// Looping mode could have changed.
-			// FIXME: make looping mode change atomically so this is not needed
+			// looping is std::atomic<bool>, so this read is safe across threads.
 			alSourcei(source, AL_LOOPING, isLooping() ? AL_TRUE : AL_FALSE);
 			return !isFinished();
 		}
@@ -1160,11 +1159,10 @@ int Source::streamAtomic(ALuint buffer, love::sound::Decoder *d)
 			decoded = 0;
 	}
 
-	// This shouldn't run after toLoop is calculated in this streamAtomic call,
-	// otherwise it'll decrease too quickly.
-	// TODO: this code is hard to understand, can it be made more clear?
-	// It's meant to reset offsetSamples once OpenAL starts processing the first
-	// queued buffer after a loop.
+	// toLoop tracks how many OpenAL buffers are still queued before the loop point.
+	// We decrement it each time streamAtomic is called so that when it reaches 0,
+	// OpenAL has started processing the first buffer queued after the rewind —
+	// at which point it is safe to reset offsetSamples to 0 for accurate tell() reporting.
 	if (toLoop > 0)
 	{
 		if (--toLoop == 0)

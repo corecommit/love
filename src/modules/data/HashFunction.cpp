@@ -21,7 +21,10 @@
 #include "HashFunction.h"
 #include "common/Exception.h"
 
-// FIXME: Probably trivial by having tole and tobe functions, which can be ifdeffed to being identity functions
+// Big-endian support is not yet implemented. All hash implementations assume
+// little-endian byte order. To add big-endian support, introduce tole()/tobe()
+// byte-swap helpers (ifdeffed to identity functions on little-endian) and apply
+// them wherever multi-byte values are read from or written to raw byte buffers.
 #ifdef LOVE_BIG_ENDIAN
 #	error Hashing not yet implemented for big endian
 #endif

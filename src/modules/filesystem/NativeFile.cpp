@@ -261,20 +261,24 @@ bool NativeFile::seek(int64 pos, SeekOrigin origin)
 	else if (origin == SEEKORIGIN_END)
 		whence = SDL_IO_SEEK_END;
 
-	if (mode == MODE_READ && whence == SDL_IO_SEEK_SET && buffer)
+	if (mode == MODE_READ && buffer)
 	{
-		// Retain the buffer if it's forward.
-		// TODO: Handle SDL_IO_SEEK_CUR.
-		int64 offset = pos - tell();
-		if (offset >= 0 && (offset + bufferUsed) < bufferSize)
-		{
-			// Seek success
-			bufferUsed += offset;
-			return true;
-		}
+		int64 offset = 0;
+		if (whence == SDL_IO_SEEK_SET)
+			offset = pos - tell();
+		else if (whence == SDL_IO_SEEK_CUR)
+			offset = pos; // pos is already a relative offset for SEEK_CUR
 
-		// Note: We don't handle backward seek because the
-		// contents past `bufferUsed` is not necessarily valid.
+		if (whence == SDL_IO_SEEK_SET || whence == SDL_IO_SEEK_CUR)
+		{
+			// Retain the buffer if the seek lands within already-buffered data.
+			if (offset >= 0 && (offset + bufferUsed) < bufferSize)
+			{
+				bufferUsed += offset;
+				return true;
+			}
+		}
+		// Backward seeks or out-of-buffer seeks fall through to SDL_SeekIO below.
 	}
 
 	// If the read is buffered, the flush() will ensure

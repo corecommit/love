@@ -296,11 +296,13 @@ void HarfbuzzShaper::computeGlyphPositions(const ColoredCodepoints &codepoints, 
 			{
 				gindex = spaceGlyphIndex;
 
-				// This should be safe to overwrite.
-				// TODO: RTL support?
 				glyphpos.x_offset = 0;
 				glyphpos.y_offset = 0;
-				glyphpos.x_advance = HB_DIRECTION_IS_HORIZONTAL(direction) ? tabSpacesAdvanceX : 0;
+				// For RTL text, advance is negative (moving left), so negate tabSpacesAdvanceX.
+				if (HB_DIRECTION_IS_HORIZONTAL(direction))
+					glyphpos.x_advance = HB_DIRECTION_IS_BACKWARD(direction) ? -tabSpacesAdvanceX : tabSpacesAdvanceX;
+				else
+					glyphpos.x_advance = 0;
 				glyphpos.y_advance = HB_DIRECTION_IS_VERTICAL(direction) ? tabSpacesAdvanceY : 0;
 			}
 
@@ -385,11 +387,12 @@ int HarfbuzzShaper::computeWordWrapIndex(const ColoredCodepoints &codepoints, Ra
 
 			if (clustercodepoint == '\t' && isUsingSpacesForTab())
 			{
-				// This should be safe to overwrite.
-				// TODO: RTL support?
 				glyphpos.x_offset = 0;
 				glyphpos.y_offset = 0;
-				glyphpos.x_advance = HB_DIRECTION_IS_HORIZONTAL(direction) ? tabSpacesAdvanceX : 0;
+				if (HB_DIRECTION_IS_HORIZONTAL(direction))
+					glyphpos.x_advance = HB_DIRECTION_IS_BACKWARD(direction) ? -tabSpacesAdvanceX : tabSpacesAdvanceX;
+				else
+					glyphpos.x_advance = 0;
 				glyphpos.y_advance = HB_DIRECTION_IS_VERTICAL(direction) ? tabSpacesAdvanceY : 0;
 			}
 

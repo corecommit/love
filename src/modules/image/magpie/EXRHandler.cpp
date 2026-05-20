@@ -276,7 +276,8 @@ FormatHandler::EncodedImage EXRHandler::encode(const DecodedImage &img, EncodedF
 
 	exrHeader.num_channels = formatinfo.components;
 
-	// TODO: this could be configurable.
+	// Compression is hardcoded to ZIP for broad compatibility.
+	// TODO: Expose as a parameter (TINYEXR_COMPRESSIONTYPE_NONE, _RLE, _ZIPS, _ZIP, _PIZ).
 	exrHeader.compression_type = TINYEXR_COMPRESSIONTYPE_ZIP;
 
 	// TinyEXR expects malloc here because FreeEXRHeader uses free().

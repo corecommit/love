@@ -31,7 +31,8 @@ namespace physics
 namespace box2d
 {
 
-// TODO: Make this not static.
+// Static meter shared across the physics module.
+// TODO: Refactor scaleDown/scaleUp to be instance methods to support multiple worlds with different scales.
 float Physics::meter = Physics::DEFAULT_METER;
 
 Physics::Physics()

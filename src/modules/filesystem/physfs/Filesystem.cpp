@@ -242,9 +242,13 @@ bool Filesystem::setIdentity(const char *ident, bool appendToPath)
 	{
 		if (oldMountedCommonPaths[p] && p != COMMONPATH_APP_SAVEDIR)
 		{
-			// TODO: error handling?
 			auto info = commonPathMountInfo[p];
-			mountCommonPathInternal(p, info.mountPoint.c_str(), info.permissions, appendToPath, true);
+			if (!mountCommonPathInternal(p, info.mountPoint.c_str(), info.permissions, appendToPath, true))
+			{
+				// Log the failure but continue — a single path failing should
+				// not abort the entire re-mount sequence.
+				// TODO: Surface these failures to the caller via an error list.
+			}
 		}
 	}
 

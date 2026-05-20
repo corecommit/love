@@ -388,6 +388,9 @@ public:
 private:
 
 	// The length of one meter in pixels.
+	// NOTE: This is intentionally static because scaleDown/scaleUp are static
+	// and called throughout the physics module without a Physics instance.
+	// TODO: Refactor scale methods to be instance-based to support multiple worlds with different scales.
 	static float meter;
 
 	b2BlockAllocator blockAllocator;

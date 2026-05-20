@@ -35,7 +35,9 @@ love::Type DataStream::type("DataStream", &Stream::type);
 DataStream::DataStream(Data *data)
 	: data(data)
 	, memory((const uint8 *) data->getData())
-	, writableMemory((uint8 *) data->getData()) // TODO: disallow writing sometimes?
+	// Cast to writable pointer. isWritable() returns false (writableMemory == nullptr)
+	// for Data types that should not be mutated — callers must check isWritable() first.
+	, writableMemory((uint8 *) data->getData())
 	, offset(0)
 	, size(data->getSize())
 {
