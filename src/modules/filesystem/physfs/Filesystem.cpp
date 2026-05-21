@@ -245,9 +245,14 @@ bool Filesystem::setIdentity(const char *ident, bool appendToPath)
 			auto info = commonPathMountInfo[p];
 			if (!mountCommonPathInternal(p, info.mountPoint.c_str(), info.permissions, appendToPath, true))
 			{
-				// Log the failure but continue — a single path failing should
-				// not abort the entire re-mount sequence.
-				// TODO: Surface these failures to the caller via an error list.
+				// Log the failure so developers can diagnose it, but continue —
+				// a single path failing should not abort the whole re-mount sequence.
+				const char *pathName = nullptr;
+				Filesystem::getConstant(p, pathName);
+				SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+				            "LOVE filesystem: failed to re-mount common path '%s' at '%s'",
+				            pathName ? pathName : "?",
+				            info.mountPoint.c_str());
 			}
 		}
 	}

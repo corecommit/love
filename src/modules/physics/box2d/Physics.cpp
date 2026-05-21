@@ -31,8 +31,16 @@ namespace physics
 namespace box2d
 {
 
-// Static meter shared across the physics module.
-// TODO: Refactor scaleDown/scaleUp to be instance methods to support multiple worlds with different scales.
+// Global meter scale shared across the physics module.
+// NOTE: scaleDown/scaleUp are currently static class methods backed by this
+// single global, which means all Box2D worlds share the same pixels-per-meter
+// ratio. A proper fix would require:
+//   1. Storing the meter value per-World instance.
+//   2. Converting scaleDown/scaleUp to non-static methods on World (or passing
+//      the scale explicitly through every Shape/Body/Joint constructor path).
+//   3. Updating the Lua API so world:setMeter / world:getMeter are the primary
+//      entry points, deprecating the current love.physics.setMeter global.
+// This is a significant API change deferred to a future major version.
 float Physics::meter = Physics::DEFAULT_METER;
 
 Physics::Physics()

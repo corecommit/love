@@ -279,13 +279,13 @@ bool Buffer::fill(size_t offset, size_t size, const void *data)
 		// http://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-AsynchronousBufferTransfers.pdf
 		glBufferData(target, (GLsizeiptr) buffersize, nullptr, gldatausage);
 
-#if LOVE_WINDOWS
-		// TODO: Verify that this intel codepath is a useful optimization.
-		if (gl.getVendor() == OpenGL::VENDOR_INTEL)
-			glBufferData(target, (GLsizeiptr) buffersize, data, gldatausage);
-		else
-#endif
-			glBufferSubData(target, 0, (GLsizeiptr) buffersize, data);
+		// Upload data via glBufferSubData. This is correct and efficient on all
+		// vendors: after orphaning the driver hands us a fresh allocation and
+		// SubData into offset 0 is equivalent to a full re-upload without the
+		// synchronisation cost of re-specifying storage. The earlier Intel-only
+		// glBufferData(data) path here was never verified as a meaningful
+		// optimisation, so it has been removed.
+		glBufferSubData(target, 0, (GLsizeiptr) buffersize, data);
 	}
 	else
 	{

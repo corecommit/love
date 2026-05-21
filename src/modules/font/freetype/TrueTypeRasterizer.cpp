@@ -151,8 +151,28 @@ GlyphData *TrueTypeRasterizer::getGlyphDataForIndex(int index) const
 	glyphMetrics.width = bitmap.width;
 	glyphMetrics.advance = (int) (ftglyph->advance.x >> 16);
 
-	// TODO: https://stackoverflow.com/questions/60526004/how-to-get-glyph-unicode-using-freetype/69730502#69730502
-	GlyphData *glyphData = new GlyphData(0, glyphMetrics, PIXELFORMAT_LA8_UNORM);
+	// Resolve the Unicode codepoint that maps to this glyph index by walking
+	// the face's current charmap. FT_Get_First_Char / FT_Get_Next_Char iterate
+	// the charmap in ascending codepoint order and return the paired glyph
+	// index, so we can do a reverse lookup in O(n) without a separate table.
+	// For most Latin-heavy fonts the matching entry is found quickly; for large
+	// CJK fonts the walk is longer but still correct and only happens once per
+	// unique glyph requested.
+	uint32 resolvedCodepoint = 0;
+	{
+		FT_UInt gi = 0;
+		FT_ULong cp = FT_Get_First_Char(face, &gi);
+		while (gi != 0)
+		{
+			if ((int) gi == index)
+			{
+				resolvedCodepoint = (uint32) cp;
+				break;
+			}
+			cp = FT_Get_Next_Char(face, cp, &gi);
+		}
+	}
+	GlyphData *glyphData = new GlyphData(resolvedCodepoint, glyphMetrics, PIXELFORMAT_LA8_UNORM);
 
 	const uint8 *pixels = bitmap.buffer;
 	uint8 *dest = (uint8 *) glyphData->getData();

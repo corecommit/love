@@ -472,9 +472,14 @@ static bool computeDispatchBarriers(Shader *shader, GLbitfield &preDispatchBarri
 			postDispatchBarriers |= GL_SHADER_STORAGE_BARRIER_BIT;
 		}
 
-		// TODO: does this need a pre dispatch barrier too?
+		// Indirect argument buffers need a pre-dispatch barrier so that any
+		// prior compute or CPU writes to the buffer are visible before the
+		// indirect draw/dispatch reads the arguments.
 		if (usage & BUFFERUSAGEFLAG_INDIRECT_ARGUMENTS)
+		{
+			preDispatchBarriers  |= GL_COMMAND_BARRIER_BIT;
 			postDispatchBarriers |= GL_COMMAND_BARRIER_BIT;
+		}
 
 		if (usage & BUFFERUSAGEFLAG_TEXEL)
 			postDispatchBarriers |= GL_TEXTURE_FETCH_BARRIER_BIT;

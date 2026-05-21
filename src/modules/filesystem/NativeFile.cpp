@@ -250,9 +250,10 @@ bool NativeFile::seek(int64 pos, SeekOrigin origin)
 		return false;
 
 	if (mode == MODE_APPEND)
-		// FIXME: PhysFS "append" allows the user to
-		// seek the write pointer, but it's not possible
-		// to do so with standard fopen-style modes.
+		// Append mode opens the underlying SDL_IOStream at the end of the file.
+		// SDL3 does not expose a way to reposition the write pointer for
+		// append streams (matching POSIX O_APPEND semantics), so seeking is
+		// intentionally disallowed here.
 		return false;
 
 	SDL_IOWhence whence = SDL_IO_SEEK_SET;

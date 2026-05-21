@@ -410,60 +410,40 @@ std::string JoystickModule::getDeviceGUID(int64 deviceid) const
 
 void JoystickModule::loadGamepadMappings(const std::string &mappings)
 {
-	// TODO: We should use SDL_GameControllerAddMappingsFromRW. We're
-	// duplicating its functionality for now because it was added after
-	// SDL 2.0.0's release, and we want runtime compat with 2.0.0 on Linux...
+	if (mappings.empty())
+		return;
 
+	// Use SDL3's built-in mapping loader via an SDL_IOStream over the string
+	// buffer. This handles comments, platform filtering, and line parsing
+	// correctly without duplicating SDL internals.
+	SDL_IOStream *io = SDL_IOFromConstMem(mappings.c_str(), (int) mappings.size());
+	if (io == nullptr)
+		throw love::Exception("Failed to create SDL IOStream for gamepad mappings: %s", SDL_GetError());
+
+	int added = SDL_AddGamepadMappingsFromIO(io, true);
+
+	if (added < 0)
+		throw love::Exception("Invalid gamepad mappings: %s", SDL_GetError());
+
+	if (added == 0)
+		return;
+
+	// Record recently-seen GUIDs and re-check already-open joysticks, because
+	// SDL3 won't fire device events for them when a new mapping is added.
 	std::stringstream ss(mappings);
-	std::string mapping;
-	bool success = false;
-
-	// The mappings string contains newline-separated mappings.
-	while (std::getline(ss, mapping))
+	std::string line;
+	while (std::getline(ss, line))
 	{
-		if (mapping.empty())
+		if (line.empty() || line[0] == '#')
 			continue;
 
-		// Lines starting with "#" are comments.
-		if (mapping[0] == '#')
-			continue;
-
-		// Strip out and compare any "platform:XYZ," in the mapping.
-		size_t pstartpos = mapping.find("platform:");
-		if (pstartpos != std::string::npos)
+		std::string guid = line.substr(0, line.find_first_of(','));
+		if (!guid.empty())
 		{
-			pstartpos += strlen("platform:");
-
-			size_t pendpos = mapping.find_first_of(',', pstartpos);
-			std::string platform = mapping.substr(pstartpos, pendpos - pstartpos);
-
-			if (platform.compare(SDL_GetPlatform()) != 0)
-			{
-				// Ignore the mapping but still acknowledge that it is one.
-				success = true;
-				continue;
-			}
-
-			pstartpos -= strlen("platform:");
-			mapping.erase(pstartpos, pendpos - pstartpos + 1);
-		}
-
-		if (SDL_AddGamepadMapping(mapping.c_str()) != -1)
-		{
-			success = true;
-			std::string guid = mapping.substr(0, mapping.find_first_of(','));
 			recentGamepadGUIDs[guid] = true;
-
-			// Re-check connected joysticks: SDL3 won't fire device events
-			// for already-open joysticks when a new mapping is added.
 			checkGamepads(guid);
 		}
 	}
-
-	// Don't error when an empty string is given, since saveGamepadMappings can
-	// produce an empty string if there are no recently seen gamepads to save.
-	if (!success && !mappings.empty())
-		throw love::Exception("Invalid gamepad mappings.");
 }
 
 std::string JoystickModule::getGamepadMappingString(const std::string &guid) const
